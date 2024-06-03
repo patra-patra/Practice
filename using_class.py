@@ -129,6 +129,7 @@ model.compile(
     metrics=["accuracy"]
 )
 
+model.load_weights("animals_model")
 
 # Оценка модели на тестовых данных
 scores = model.evaluate(test, verbose=1)
