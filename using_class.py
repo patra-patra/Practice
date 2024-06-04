@@ -1,15 +1,10 @@
 import os
 import pathlib
-import keras.regularizers
 import numpy as np
 import tensorflow as tf
-from keras.layers import Conv2D
 import matplotlib.pyplot as plt
-import seaborn as sn
-import splitfolders
 
 from PIL import Image
-
 
 def check_image_format(file_path):
     try:
@@ -19,7 +14,6 @@ def check_image_format(file_path):
     except (IOError, SyntaxError) as e:
         print(f'Bad file: {file_path}')
         return False
-
 
 def display_samples(dataset, n_samples, classes_name):
     plt.figure(figsize=(10, 10))
@@ -31,14 +25,12 @@ def display_samples(dataset, n_samples, classes_name):
             plt.axis("off")
     plt.show()
 
-
 def preprocess_image(image_path):
     img = tf.keras.preprocessing.image.load_img(image_path, target_size=(img_height, img_width))
     img_array = tf.keras.preprocessing.image.img_to_array(img)
     img_array = np.expand_dims(img_array, axis=0)
     img_array /= 255.0
     return img_array
-
 
 def clean_directory(directory):
     for root, _, files in os.walk(directory):
@@ -48,11 +40,10 @@ def clean_directory(directory):
                 os.remove(file_path)
                 print(f'Removed: {file_path}')
 
-
 # Разделение набора данных на тренировочный, валидационный и тестовый наборы
 input_folder = "C:\\Users\\user\\Desktop\\dataset"
 output_folder = "C:\\Users\\user\\Desktop\\split_dataset"
-#splitfolders.ratio(input_folder, output=output_folder, seed=42, ratio=(.7, .2, .1))
+# splitfolders.ratio(input_folder, output=output_folder, seed=42, ratio=(.7, .2, .1))
 
 # Очистка и проверка изображений в новом наборе данных
 clean_directory(output_folder)
@@ -89,7 +80,6 @@ test = tf.keras.utils.image_dataset_from_directory(
 
 class_names_len = len(train.class_names)
 class_names = train.class_names
-# display_samples(train, 25, class_names)
 
 AUTOTUNE = tf.data.experimental.AUTOTUNE
 
@@ -129,8 +119,41 @@ model.compile(
     metrics=["accuracy"]
 )
 
-model.load_weights("animals_model")
+class AnimalClassifier:
+    def __init__(self, model, class_names):
+        self.model = model
+        self.model.load_weights("animals_model_")
+        self.class_names = class_names
+
+    def preprocess_image(self, image_path, img_height, img_width):
+        img = tf.keras.preprocessing.image.load_img(image_path, target_size=(img_height, img_width))
+        img_array = tf.keras.preprocessing.image.img_to_array(img)
+        img_array = np.expand_dims(img_array, axis=0)
+        img_array /= 255.0
+        return img_array
+
+    def predict(self, image_path, img_height=180, img_width=180):
+        img_array = self.preprocess_image(image_path, img_height, img_width)
+        predictions = self.model.predict(img_array)
+        predicted_class = np.argmax(predictions[0])
+        class_probabilities = {self.class_names[i]: predictions[0][i] for i in range(len(self.class_names))}
+        return self.class_names[predicted_class], class_probabilities
+
+# Инициализация модели и загрузка весов
+classifier = AnimalClassifier(model, class_names)
+
+# Добавление тестовых изображений для проверки
+test_image_paths = [
+    "C:\\Users\\user\\Desktop\\split_dataset\\test\cow\\6933.jpeg"
+]
+
+for image_path in test_image_paths:
+    predicted_class, class_probabilities = classifier.predict(image_path)
+    print(f'Image: {image_path}')
+    print(f'Predicted class: {predicted_class}')
+    print('Class probabilities:', class_probabilities)
+    print('-' * 30)
 
 # Оценка модели на тестовых данных
-scores = model.evaluate(test, verbose=1)
-print("Точность тестирования", round(scores[1] * 100, 4))
+acc = model.evaluate(test, verbose=1)
+print("Точность тестирования: ", acc)

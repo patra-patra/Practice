@@ -1,12 +1,9 @@
 import os
 import pathlib
-import keras.regularizers
 import numpy as np
-import tensorflow as tf
-from keras.layers import Conv2D
-import matplotlib.pyplot as plt
-import seaborn as sn
 import splitfolders
+import tensorflow as tf
+import matplotlib.pyplot as plt
 
 from PIL import Image
 
@@ -89,7 +86,7 @@ test = tf.keras.utils.image_dataset_from_directory(
 
 class_names_len = len(train.class_names)
 class_names = train.class_names
-# display_samples(train, 25, class_names)
+display_samples(train, 25, class_names)
 
 AUTOTUNE = tf.data.experimental.AUTOTUNE
 
@@ -147,9 +144,9 @@ history = model.fit(
 )
 
 # Сохранение весов модели
-model.save_weights("animals_model")
+model.save_weights("animals_model_")
 
-model.save("animal_model.h5")
+model.save("animal_model_.h5")
 def result(file_path):
     # Предобработка изображения
     img_array = preprocess_image(file_path)
